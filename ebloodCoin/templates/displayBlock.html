@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Block {{block.id}}{% endblock %}</h1>
+
+
+
+<form>
+
+
+   <div class="form-group row">
+     <label for="previousHash" class="col-sm-2 col-form-label">previous hash</label>
+    <div class="col-sm-10">
+     <input type="text" class="form-control" id="previousHash" placeholder="{{block.previousHashId}}" disabled>
+    </div>
+  </div>
+
+	 <br>
+
+  <div class="form-group row">
+    <label for="blockHash" class="col-sm-2 col-form-label">block hash</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="hash" aria-describedby="hash" placeholder="{{block.hash}}" disabled>
+      <small id="hashHelp" class="form-text text-muted">hash is not displayed if block has not been yet mined</small>
+    </div>
+  </div>
+  
+  <div class="form-group row">
+    <label for="transNb" class="col-sm-2 col-form-label">Number of transactions</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="transNb" aria-describedby="hash" placeholder="{{block.getTotalTransactionSize()}}" disabled>
+    </div>
+  </div>
+  
+   <br>
+  
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">hash</th>
+      <th scope="col">sender</th>
+      <th scope="col">receiver</th>
+      <th scope="col">fund</th>
+      <th scope="col">signed</th>
+      <th scope="col">signature</th>
+    </tr>
+  </thead>
+  <tbody>    
+    {% for item in block.transactions %}
+        <tr>
+	      <th scope="row">{{ item.sequentialNumber }}</th>
+	      <td>{{ item.hashId }}</td>
+	      <td>{{ item.sender }}</td>
+	       
+	       {% if  item.receivers|length <= 1 %}
+	       	<td>{{item.receivers[0]}}</td>
+	       {% else %}
+			<td>{{len(item.receivers)}} receivers</td>
+		   {% endif %}
+	       
+	       {% if  item.fundToTransfers|length <= 1 %}
+	       	<td>{{item.fundToTransfers[0]}}</td>
+	       {% else %}
+			<td>{{len(item.fundToTransfers)}} receivers</td>
+		   {% endif %}
+		   
+		   
+	       <td>{{ item.signed }}</td>
+	       
+	       <td>{{ item.creatorSignature }}</td>
+	    </tr>
+    {% endfor %}
+   </tbody>
+</table>
+  
+  
+  
+  
+   <br>
+  
+  <div class="form-group row">
+    <div class="col-sm-2">Signed</div>
+    <div class="col-sm-10">
+      <div class="form-check">
+      	{% if not block.creatorSignature %}
+     		<input class="form-check-input" type="checkbox" id="gridCheck1" disabled>
+		{% else %}
+			<input class="form-check-input" type="checkbox" id="gridCheck1" checked disabled>
+		{% endif %}
+		
+        
+      </div>
+    </div>
+  </div>
+  
+  <br>
+  <br>
+  
+  <div class="form-group row">
+  	 <div class="col-sm-10">
+      <button type="button" class="btn btn-warning" onclick="window.location.href='/addTransactionToBlock/{{ block.id}}'">Add Transaction</button>
+    </div>
+  </div>
+   
+  </div>
+	<div class="col-sm-10">
+      <button type="button" class="btn btn-dark" onclick="window.location.href='/displayBlockChain'">Back</button>
+    </div>
+ </div>
+  
+  
+   
+</form>
+
+
+
+{% endblock %}

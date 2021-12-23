@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} {{ title }} {% endblock %}</h1>
+   
+    
+    
+     {% for block in blockchain %}
+     	<h4>block {{ block.id }}</h4>
+     	
+     	<h6>Previous Hash	{{ block.previousHashId }}</h6>
+     	<h6>Hash			{{ block.hash }}</h6>
+     	<h6>#Transactions   {{ block.transactions|length }} </h6>
+     	
+     	{% if not block.creatorSignature %}
+     		<h6>Not Signed<span class="badge badge-pill badge-danger">Danger</span></h6>
+		{% else -%}
+			<h6>Signed by<span class="badge badge-pill badge-success">{{block.creator}}</span></h6>
+		{% endif %}
+		
+		<button type="button" class="btn btn-warning" onclick="window.location.href='/displayBlock/{{ block.id-1 }}'">View</button>
+		<button type="button" class="btn btn-dark" onclick="window.location.href='/mineBlock/{{ block.id-1 }}'">Mine</button>
+    	
+    
+        <hr>
+    {% endfor %}
+    
+    
+{% endblock %}
