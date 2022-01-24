@@ -6,6 +6,7 @@ Created on 7 Dec 2021
 from time import time
 from ebloodCoin.utils import HashingUtils, SignatureUtils
 import base64
+from ebloodCoin.blockchain.transaction.UTXo import UTXo
 
 class Transaction(object):
     
@@ -25,6 +26,27 @@ class Transaction(object):
         self.fundToTransfers = fundToTransfers
         self.hashId = self.computeHashId()
         self.signed = False
+        
+    
+    def prepareOutput(self):
+        if len(self.receivers) != len(self.fundToTransfers):
+            return False
+        totalCost = self.getTotalFundToTransfer()
+        
+        available = 0.
+        for i in self.inputs:
+            available += i.amount
+            
+        if(available < totalCost):
+            return False
+        
+        for i in range(len(self.receivers)):
+            self.output.append(UTXo(self.receivers[i], self.sender, self.fundToTransfers[i])) 
+        
+        #change
+        self.output.append(UTXo(self.sender, self.sender, available - totalCost))
+        return True 
+        
         
         
     def getTotalFundToTransfer(self):
@@ -69,3 +91,4 @@ class Transaction(object):
         
         return transData
        
+        

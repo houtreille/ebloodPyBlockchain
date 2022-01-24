@@ -1,15 +1,17 @@
-from flask import Flask
+from flask import Flask, json
 from flask.templating import render_template
 import mysql.connector
 from werkzeug.exceptions import abort
 from flask import Flask, render_template, request, url_for, flash, redirect
-from ebloodCoin.proxy.proxyController import proxy
 from ebloodCoin.blockchain.transaction.Transaction import Transaction
-import json
-import os
-import base64
+from flask.globals import session
+from ebloodCoin.utils import SignatureUtils
+from Tools.demo.mcast import receiver, sender
+from ebloodCoin.proxy.proxyController import proxyController
+from pyasn1.compat import integer
 
-proxy = proxy()
+global wallet
+proxy = proxyController()
 app = Flask(__name__)
 app.config["DEBUG"] = 'True'
 app.config['SECRET_KEY'] = 'your secret key'
@@ -44,6 +46,12 @@ def createNewBlock():
 
 @app.route('/displayBlockChain')
 def displayBlockChain():
+    return render_template('displayBlockChain.html', blockchain=proxy.blockchain.blockchain, proxy = proxy)
+
+@app.route('/hack')
+def hackBlockChain():
+    proxy.hackBlockChain()
+    flash("Blockchain has been modified")
     return render_template('displayBlockChain.html', blockchain=proxy.blockchain.blockchain, proxy = proxy)
 
 
@@ -86,16 +94,36 @@ def addTransactionToBlock(id):
 
 @app.route('/createWallet', methods=('GET', 'POST')) 
 def createWallet():
-    wallet = proxy.createWallet()
-    wallet.setName('eblood')
-    wallet.password = "Reuss1r+"
-    path = wallet.name + ".txt"
-    proxy.persistWallet(wallet, path)    
-    
-    return render_template('wallet/createWallet.html', wallet=wallet , proxy = proxy)
     
     
-
+    print("Create Wallet : " + request.method)
+    
+    if request.method == 'POST':
+        name = request.form['walletName']
+        
+        password = request.form['walletpassword']
+        
+        file = request.form['keyFile']
+        
+        print("Wallet name : " + name + " " + password + " "  + file )
+        
+        proxy.createdWallet.setName(name)
+        proxy.createdWallet.setPassword(password)
+        
+        SignatureUtils.exportAsFile(proxy.createdWallet.dict, 'PEM', name+"Private.PEM", name+"Public.PEM", password)
+        
+        
+        return render_template('wallet/createWallet.html' , wallet = None)
+        
+    else:
+        wallet = proxy.createWallet()
+        
+         
+        session['walletPublicKey'] = wallet.getublicKeyAsStr()
+        #proxy.persistWallet(wallet, path)    
+    
+        return render_template('wallet/createWallet.html' , wallet = wallet)
+    
 
 
 @app.route('/connectWallet', methods=('GET', 'POST')) 
@@ -103,15 +131,77 @@ def connectWallet():
     if request.method == 'POST':
         
         password = request.form['passwd']
-        pemFilePath = "C:/Work/EclipseProjects/Python/pythonBlockchain/flaskProject/eblood/" +   request.form['keyFile']
-        proxy.connectedWallet =  proxy.retrieveWallet(pemFilePath=pemFilePath, password=password)
-        proxy.connectedWallet.setName(pemFilePath[1+pemFilePath.rfind("/"):pemFilePath.rfind("_")])
+        pemFilePath =    request.form['keyFile'] #"C:/Work/EclipseProjects/Python/pythonBlockchain/flaskProject/eblood/" +
+        walletName =  pemFilePath[0:pemFilePath.rfind("Private.PEM")]
+        
+        proxy.connectedWallet =  proxy.retrieveWallet(app.root_path, walletName, password)
+        
+        
      
         return redirect(url_for("index"))
     else:
         return render_template('wallet/connectWallet.html', proxy = proxy)
     
     
+
+
+@app.route('/dashboard') 
+def dashboard():     
+    labels = []
+    values = []
+    
+    for key, value in proxy.connectedWallet.assetHistory.items():
+        labels.append(key)
+        values.append(value)
+        
+    legend = "Balance"
+   
+    return render_template('wallet/dashboard.html', values=values, legend=legend, labels=labels, proxy = proxy)
+
+
+@app.route('/jumbo') 
+def jumbo():     
+    
+    labels = []
+    values = []
+    
+    for key, value in proxy.connectedWallet.assetHistory.items():
+        labels.append(key)
+        values.append(value)
+        
+    legend = "Balance"
+    
+    return render_template('wallet/jumbotron.html', values=values, legend=legend, labels=labels, proxy = proxy)
+
+@app.route('/transferFund', methods=('GET', 'POST')) 
+def transferFund():
+    if request.method == 'POST':
+        sender = proxy.connectedWallet
+        #proxy.getWalletByName(request.form['sender'])
+        receiver = proxy.getWalletByName(request.form['receiver'])
+        fundToTransfer = float(request.form['fundToTransfer'])
+        try:
+            t1 = proxy.transferFunds(proxy.connectedWallet, [receiver], [fundToTransfer])
+            proxy.addTransaction(t1)
+            flash("{0} has been created".format(t1.hashId))
+        except NameError as err:
+            flash("{0}".format(err))    
+            
+            
+        return redirect(url_for("index"))
+        
+    else:
+        if(proxy.getBlockchain().getSize() == 0):
+            block =  proxy.createNewBlock(None)
+            proxy.addBlockToBlockchain(block)
+            flash("Block {0} has been created".format(block.id),'success')
+        else:
+            block = proxy.blockchain.getLastBlock()
+        
+        return render_template('newTransaction.html', block=block, proxy = proxy)
+
+
+   
 def getConnectedWalletString():
     if proxy.connectedWallet:
         return  proxy.connectedWallet.name

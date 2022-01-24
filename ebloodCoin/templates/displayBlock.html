@@ -51,10 +51,10 @@
         <tr>
 	      <th scope="row">{{ item.sequentialNumber }}</th>
 	      <td>{{ item.hashId }}</td>
-	      <td>{{ item.sender }}</td>
+	      <td>{{ item.sender.name }}</td>
 	       
 	       {% if  item.receivers|length <= 1 %}
-	       	<td>{{item.receivers[0]}}</td>
+	       	<td>{{item.receivers[0].name}}</td>
 	       {% else %}
 			<td>{{len(item.receivers)}} receivers</td>
 		   {% endif %}

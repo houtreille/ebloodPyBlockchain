@@ -5,15 +5,99 @@ from Cryptodome.Hash import *
 from Cryptodome.Hash import SHA
 from encodings.base64_codec import base64_encode
 import base64
+import binascii
 
 
 
 def newkeys(keysize):
    random_generator = Random.new().read
-   key = RSA.generate(keysize, random_generator)
-   return key
+   
+   privateKey = RSA.generate(keysize, random_generator)
+   publicKey = privateKey.publickey()
+   
+   response = {  # Dictionary
+        'privatekey' : privateKey,
+        'publickey'  : publicKey                                      
+    }
+   
+   
+   return response
 
 
+
+def exportKeys(dictKeys, format, passphrase = None):
+    
+    privateKey = dictKeys['privatekey']
+    publicKey =  dictKeys['publickey']
+
+   
+    privateKey = privateKey.exportKey(format, passphrase)
+    publicKey =  publicKey.exportKey(format, passphrase)
+    
+    response = {  # Dictionary
+    'exportedPrivateKey' : privateKey,
+    'exportedPublicKey'  : publicKey                                      
+    }
+    
+    return response
+    
+        
+def exportAsString(dictKeys, format, passphrase = None):
+    
+    privateKey = dictKeys['privatekey']
+    publicKey =  dictKeys['publickey']
+    
+    privateKeyPEM = privateKey.exportKey(format, passphrase)
+    publicKeyPEM =  publicKey.exportKey(format, passphrase)
+    
+    base64privateKey = base64.b64encode(privateKeyPEM)
+    base64publicKey = base64.b64encode(publicKeyPEM)
+
+    hexprivateKey = binascii.hexlify(privateKeyPEM).decode('ascii')
+    hexpublicKey = binascii.hexlify(publicKeyPEM).decode('ascii')
+
+    response = {  # Dictionary
+        'privateKeyB64': base64privateKey,
+        'publicKeyB64': base64publicKey,
+        'privateKeyHex' : hexprivateKey,
+        'publicKeyHex'  : hexpublicKey                                      
+    }
+
+    return response
+
+
+def exportAsFile(dictKeys, format, prv_filePath, pub_filePath, passphrase = None):
+    
+    dictExported = exportKeys(dictKeys, format, passphrase)
+    
+    fPRV = open(prv_filePath, 'wb')
+    fPRV.write(dictExported['exportedPrivateKey'])
+    fPRV.close()
+    
+    
+    fpUB = open(pub_filePath, 'wb')
+    fpUB.write(dictExported['exportedPublicKey'])
+    fpUB.close()
+        
+        
+        
+def importKeyFile(prv_filePath, pub_filePath, passphrase = None):
+    
+    fpUB = open(pub_filePath, 'rb')
+    publicKey = RSA.importKey(fpUB.read(), passphrase)
+    
+    fPRV = open(prv_filePath, 'rb')
+    privateKey = RSA.importKey(fPRV.read(), passphrase)
+    
+    response = {  # Dictionary
+        'publicKey': publicKey,
+        'privateKey': privateKey                                     
+    }
+
+    return response
+    
+    
+    
 def getKeyString(key):
     return base64.b64encode(key)
 

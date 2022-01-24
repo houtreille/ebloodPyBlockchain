@@ -12,10 +12,12 @@ class UTXo(object):
     '''
     classdocs
     '''
+    sequentialNumberStatic = 0
 
 
     def __init__(self, receiver, sender, amount):
-        self.sequentialNumber = sequentialNumberStatic
+        self.sequentialNumber = UTXo.sequentialNumberStatic
+        UTXo.sequentialNumberStatic += 1
         self.receiver = receiver
         self.sender = sender
         self.amount = amount
@@ -24,7 +26,7 @@ class UTXo(object):
         
        
     def computeHashId(self):
-        return HashingUtils.hash256(bytes(str(self),'UTF-8'), format)  
+        return HashingUtils.hash256(bytes(str(self),'UTF-8'), format='base64')  
     
     def __str__(self):
         return str(self.sequentialNumber) + str(self.receiver) + str(self.sender) + str(self.amount) + str(self.timestamp)

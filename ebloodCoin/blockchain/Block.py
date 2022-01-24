@@ -6,6 +6,8 @@ import base64
 class Block(object):
 
 
+    MAX_TRANS_NB = 3
+
     def __init__(self, previousHashId, difficultyLevel = Parameters.MINING_DIFFICULTY, creator = None):
         self.previousHashId = previousHashId
         self.difficultyLevel = difficultyLevel
@@ -47,7 +49,7 @@ class Block(object):
     
     
     def signBlock(self):
-        self.creatorSignature = base64.b64encode(SignatureUtils.sign(bytes(self.hash,'UTF-8'), self.creator))
+        self.creatorSignature = base64.b64encode(SignatureUtils.sign(bytes(self.hash,'UTF-8'), self.creator.privateKey))
         
     def verifyBlock(self, key):    
         SignatureUtils.verify(bytes(self.hash,'UTF-8'), self.creator, key)
@@ -57,3 +59,6 @@ class Block(object):
         
     def getTotalTransactionSize(self):
         return len(self.transactions)
+    
+    def __str__(self, *args, **kwargs):
+        return "Block#{0}".format(self.id)

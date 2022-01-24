@@ -17,15 +17,26 @@
     </div>
   </div>
   
+
+
+
   <br>
    <div class="form-group row">
     <label for="r" class="col-sm-2 col-form-label">Receiver</label>
     <div class="col-sm-10">
      
-      <input type="text" name="receiver" 
+        <select name="receiver" class="form-select form-select-sm" aria-label=".form-select-sm example">
+          {% for wallet in proxy.connectedWallet.whiteListWallet %}
+          <option value= "{{wallet.name}}" SELECTED>{{wallet.name}}</option>"
+          {% endfor %}
+        </select>
+
+
+
+      <!--input type="text" name="receiver" 
                class="form-control"
                value="{{ request.form['receiver']}}">
-        </input>
+        </input-->
     </div>
   </div>
   
